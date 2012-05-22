@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+    name="BuildChoiceTut"
+    default="help" >
+
+    <property file="local.properties" /> <!-- load the SDK directory variable -->
+
+    <property file="ant.properties" /> <!-- load the keystore variables (for building APKS) -->
+
+    <loadproperties srcFile="project.properties" /> <!-- load the Android target and proguard (if enabled) -->
+
+
+    <!-- quick check that sdk.dir has been set properly -->
+
+    <fail
+        message="sdk.dir is missing. Make sure to generate local.properties using &apos;android update project&apos;"
+        unless="sdk.dir" />
+
+    <!--
+         Custom Android task to deal with the project target, and import the proper rules.
+         This requires ant 1.6.0 or above.
+    -->
+
+    <path id="android.antlibs" > <!-- This is Android build stuff its needed! -->
+
+        <pathelement path="${sdk.dir}/tools/lib/anttasks.jar" />
+
+        <pathelement path="${sdk.dir}/tools/lib/sdklib.jar" />
+
+        <pathelement path="${sdk.dir}/tools/lib/androidprefs.jar" />
+
+        <pathelement path="${sdk.dir}/tools/lib/apkbuilder.jar" />
+
+        <pathelement path="${sdk.dir}/tools/lib/jarutils.jar" />
+    </path>
+
+    <!-- version-tag: 1 -->
+
+    <import file="${sdk.dir}/tools/ant/build.xml" /> <!-- Inherit from the Android build file (very useful) -->
+
+
+    <!-- The configuration depends on "clean" because otherwise the build system will not detect changes in the configuration. -->
+
+    <target
+        name="buildDev"
+        description="Build APK with developer settings i.e. logging on etc" > <!-- Name the build and give it a helpful description -->
+
+        <antcall target="clean" /> <!-- clean out the /bin/ directory and delete all temp and cached files -->
+
+        <antcall target="loadDevProperties" /> <!-- this is the business! here we are overwriting our config file -->
+
+        <antcall target="debug" /> <!-- Build a debug APK and place it in /bin/ -->
+    </target>
+
+    <!-- The configuration depends on "clean" because otherwise the build system will not detect changes in the configuration. -->
+
+    <target
+        name="buildLive"
+        description="Build APK with live settings i.e. logging off etc" >
+
+        <antcall target="clean" />
+
+        <antcall target="loadLiveProperties" />
+
+        <antcall target="release" />
+    </target>
+
+    <property
+        name="config.target.path"
+        value="src/com/blundell/tut/" /> <!-- This is like java variable creation. Here we setup the path of where the Config.java file is in your Android project -->
+
+
+    <!-- Copy Config,java to our source tree, replacing custom tokens with values from ant.properties -->
+
+    <target
+        name="loadDevProperties"
+        description="Use dev properties for logging / url etc" >
+
+        <property
+            name="config.properties.file"
+            value="config.dev.properties" /> <!-- For loading dev properties we setup the variable 'config.properties.file' to be the dev properties -->
+
+        <antcall target="copyProperties" /> <!-- We then copy from our /config/ to our project build /com.blundell.tut/ -->
+    </target>
+
+    <!-- Copy Config,java to our source tree, replacing custom tokens with values from ant.properties -->
+
+    <target
+        name="loadLiveProperties"
+        description="Use live properties for logging / url etc" >
+
+        <property
+            name="config.properties.file"
+            value="config.live.properties" />
+
+        <antcall target="copyProperties" />
+    </target>
+
+    <target
+        name="copyProperties"
+        description="Copy the configuration file, replacing tokens in the file" >
+
+        <copy
+            encoding="utf-8"
+            file="config/Config.java"
+            overwrite="true"
+            todir="${config.target.path}" > <!-- This is reading the template file and overwriting our build path equivalent file -->
+
+            <filterset filtersfile="config/${config.properties.file}" /> <!-- Whilst it is overwriting we replace the placeholder with the values we set -->
+        </copy>
+
+        <tstamp />
+
+        <echo message="Copy of properties finished. ${TSTAMP}" />
+    </target>
+
+</project>
